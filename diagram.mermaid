@@ -1,0 +1,26 @@
+sequenceDiagram
+    autonumber
+    participant UI
+    participant HackAI as Hack AI Agent
+    participant Proxy as Proxy Server
+    participant DB as Packet Data DB
+
+    Note over UI,HackAI: (1) get_proxy 호출
+    UI->>HackAI: get_proxy(task_seq_num)
+    HackAI->>Proxy: get_proxy(task_seq_num)
+    Proxy->>DB: SELECT request/response<br/>WHERE task_seq_num = ...
+    DB-->>Proxy: 패킷 데이터 반환
+    Proxy-->>HackAI: { "request": ..., "response": ... }
+    HackAI-->>UI: { "request": ..., "response": ... }
+
+    Note over UI,HackAI: (2) edit_proxy 호출
+    UI->>HackAI: edit_proxy(task_seq_num, edit_packet_data)
+    HackAI->>Proxy: edit_proxy(task_seq_num, edit_packet_data)
+    Proxy->>DB: SELECT request<br/>WHERE task_seq_num = ...
+    DB-->>Proxy: 기존 request 패킷
+    Proxy->>Proxy: request 수정<br/>(edit_packet_data 적용)
+    Proxy->>SomeServer: 수정된 request 전송<br/>(실제 대상 서버 혹은 API)
+    SomeServer-->>Proxy: response 수신
+    Proxy->>DB: (옵션) 수정된 request/response DB에 저장
+    Proxy-->>HackAI: { "before_request": ...,<br/>"after_request": ...,<br/>"response": ... }
+    HackAI-->>UI: { "before_request": ...,<br/>"after_request": ...,<br/>"response": ... }
